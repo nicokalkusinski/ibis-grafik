@@ -235,12 +235,15 @@ function renderAppSchedule() {
   }
   const { schedule, month, year } = appState.currentSchedule;
   const insights = deriveScheduleInsights(schedule, month, year, appState.workers);
-  renderSchedule(schedule, insights.coverage.missingDayIndexes);
+  renderSchedule(schedule, {
+    columns: insights.coverage.missingDayIndexes,
+    cells: insights.nightToDay.cells,
+  });
   renderWarnings(insights.warnings);
   renderSummary(insights.summary);
 }
 
-function renderSchedule(schedule, highlightedDayIndexes = []) {
+function renderSchedule(schedule, highlights = { columns: [], cells: [] }) {
   scheduleOutput.innerHTML = "";
   if (!schedule) {
     scheduleOutput.classList.add("empty-state");
@@ -250,7 +253,10 @@ function renderSchedule(schedule, highlightedDayIndexes = []) {
   }
   scheduleOutput.classList.remove("empty-state");
 
-  const highlightedSet = new Set(highlightedDayIndexes);
+  const highlightedColumns = new Set(highlights.columns || []);
+  const highlightedCells = new Set(
+    (highlights.cells || []).map((cell) => `${cell.rowId}:${cell.dayIndex}`),
+  );
   const table = document.createElement("table");
   table.className = "schedule-table";
   const thead = document.createElement("thead");
@@ -268,7 +274,7 @@ function renderSchedule(schedule, highlightedDayIndexes = []) {
     if (day.isSunday) {
       th.classList.add("day-sunday-header");
     }
-    if (highlightedSet.has(index)) {
+    if (highlightedColumns.has(index)) {
       th.classList.add("day-warning");
     }
     headRow.append(th);
@@ -291,7 +297,7 @@ function renderSchedule(schedule, highlightedDayIndexes = []) {
       if (dayMeta?.isSunday) {
         td.classList.add("day-sunday");
       }
-      if (highlightedSet.has(index)) {
+      if (highlightedColumns.has(index) || highlightedCells.has(`${row.id}:${index}`)) {
         td.classList.add("day-warning");
       }
       const select = document.createElement("select");
@@ -833,12 +839,14 @@ function updateSchedulePeriodText(month, year) {
 
 function deriveScheduleInsights(schedule, month, year, workers) {
   const coverage = computeCoverage(schedule, month, year);
+  const nightToDay = computeNightToDayWarnings(schedule, month, year);
   const summary = computeSummaryFromSchedule(schedule, workers);
   const summaryWarnings = summary.flatMap((entry) => entry.warnings);
   return {
     coverage,
+    nightToDay,
     summary,
-    warnings: [...coverage.warnings, ...summaryWarnings],
+    warnings: [...coverage.warnings, ...nightToDay.warnings, ...summaryWarnings],
   };
 }
 
@@ -867,6 +875,42 @@ function computeCoverage(schedule, month, year) {
   });
 
   return { missingDayIndexes, warnings };
+}
+
+function computeNightToDayWarnings(schedule, month, year) {
+  if (!schedule) {
+    return { cells: [], warnings: [] };
+  }
+  const cellKeys = new Set();
+  const cells = [];
+  const warnings = [];
+
+  schedule.rows.forEach((row) => {
+    row.slots.forEach((slot, index) => {
+      if (index === 0 || !slot) {
+        return;
+      }
+      const prev = row.slots[index - 1];
+      if (prev !== "N" || slot !== "D") {
+        return;
+      }
+      const dayMeta = schedule.days[index];
+      const date = dayMeta?.date || new Date(year, month - 1, dayMeta?.day);
+      const currentKey = `${row.id}:${index}`;
+      const prevKey = `${row.id}:${index - 1}`;
+      if (!cellKeys.has(currentKey)) {
+        cellKeys.add(currentKey);
+        cells.push({ rowId: row.id, dayIndex: index });
+      }
+      if (!cellKeys.has(prevKey)) {
+        cellKeys.add(prevKey);
+        cells.push({ rowId: row.id, dayIndex: index - 1 });
+      }
+      warnings.push(`${formatDate(date)} zmiana N→D dla ${row.name}.`);
+    });
+  });
+
+  return { cells, warnings };
 }
 
 function computeSummaryFromSchedule(schedule, workers) {
