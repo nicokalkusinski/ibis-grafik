@@ -325,6 +325,7 @@ function renderSchedule(schedule, highlights = { columns: [], cells: [] }) {
     tr.append(th);
     row.slots.forEach((slot, index) => {
       const td = document.createElement("td");
+      const isLocked = Array.isArray(row.locks) ? Boolean(row.locks[index]) : false;
       const dayMeta = schedule.days[index];
       if (dayMeta?.isSaturday) {
         td.classList.add("day-saturday");
@@ -337,11 +338,13 @@ function renderSchedule(schedule, highlights = { columns: [], cells: [] }) {
       if (isHighlighted) {
         td.classList.add("day-warning");
       }
+      if (isLocked) {
+        td.classList.add("cell-locked");
+      }
       const cellWrapper = document.createElement("div");
       cellWrapper.className = "cell-wrapper";
 
       const lockButton = document.createElement("button");
-      const isLocked = Array.isArray(row.locks) ? Boolean(row.locks[index]) : false;
       lockButton.type = "button";
       lockButton.className = isLocked ? "lock-btn locked" : "lock-btn";
       lockButton.textContent = isLocked ? "🔒" : "🔓";
