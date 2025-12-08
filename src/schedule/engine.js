@@ -87,6 +87,7 @@ export function buildSchedule(workers, month, year, lockedRows = [], settings) {
   });
 
   const forcedWarnings = [];
+  const forcedCells = [];
 
   dayMetadata.forEach((meta) => {
     assignShift("day", meta);
@@ -128,6 +129,7 @@ export function buildSchedule(workers, month, year, lockedRows = [], settings) {
     rows,
     summary,
     warnings: forcedWarnings,
+    forcedCells,
   };
 
   function assignShift(kind, meta) {
@@ -169,6 +171,7 @@ export function buildSchedule(workers, month, year, lockedRows = [], settings) {
       forcedWarnings.push(
         `${formatDate(meta.date)} przydzielono zmianę ${label} dla ${chosen.worker.name} pomimo blokady.`,
       );
+      forcedCells.push({ rowId: chosen.worker.id, dayIndex: meta.index });
     }
     updateBlockState(chosen, symbol, meta.index, settings);
     chosen.lastAssignedIndex = meta.index;

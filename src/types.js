@@ -55,4 +55,5 @@
  * @property {ScheduleRow[]} rows
  * @property {SummaryEntry[]} summary
  * @property {string[]} warnings
+ * @property {{ rowId: string; dayIndex: number }[]=} forcedCells
  */
