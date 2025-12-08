@@ -21,7 +21,7 @@ initSelectors(elements.monthSelect, elements.yearSelect, MONTHS);
 elements.workerForm.reset();
 setDefaultFormValues({
   workerForm: elements.workerForm,
-  workerBlockWeekdays: elements.workerBlockWeekdays,
+  workerBlockShifts: elements.workerBlockShifts,
 });
 syncSettingsFormValues(appState, {
   dayInput: elements.settingsMaxStreakDayInput,
@@ -125,9 +125,8 @@ function wireWorkerForm() {
         workerSubmitButton: elements.workerSubmitButton,
         cancelEditButton: elements.cancelEditButton,
         workerModalTitle: elements.workerModalTitle,
-        workerBlockWeekdays: elements.workerBlockWeekdays,
+        workerBlockShifts: elements.workerBlockShifts,
       });
-      closeWorkerModal();
       return;
     }
 
@@ -149,7 +148,7 @@ function wireWorkerForm() {
     elements.workerForm.reset();
     setDefaultFormValues({
       workerForm: elements.workerForm,
-      workerBlockWeekdays: elements.workerBlockWeekdays,
+      workerBlockShifts: elements.workerBlockShifts,
     });
   });
 
@@ -159,7 +158,7 @@ function wireWorkerForm() {
       workerSubmitButton: elements.workerSubmitButton,
       cancelEditButton: elements.cancelEditButton,
       workerModalTitle: elements.workerModalTitle,
-      workerBlockWeekdays: elements.workerBlockWeekdays,
+      workerBlockShifts: elements.workerBlockShifts,
     });
   });
 }
@@ -328,7 +327,7 @@ function handleStartEdit(worker) {
       workerSubmitButton: elements.workerSubmitButton,
       cancelEditButton: elements.cancelEditButton,
       workerModalTitle: elements.workerModalTitle,
-      workerBlockWeekdays: elements.workerBlockWeekdays,
+      workerBlockShifts: elements.workerBlockShifts,
     },
     () => showWorkerModal("edit"),
   );
@@ -351,7 +350,7 @@ function deleteWorker(workerId) {
       workerSubmitButton: elements.workerSubmitButton,
       cancelEditButton: elements.cancelEditButton,
       workerModalTitle: elements.workerModalTitle,
-      workerBlockWeekdays: elements.workerBlockWeekdays,
+      workerBlockShifts: elements.workerBlockShifts,
     });
   }
 }
@@ -363,7 +362,7 @@ function showWorkerModal(mode = "add") {
       workerSubmitButton: elements.workerSubmitButton,
       cancelEditButton: elements.cancelEditButton,
       workerModalTitle: elements.workerModalTitle,
-      workerBlockWeekdays: elements.workerBlockWeekdays,
+      workerBlockShifts: elements.workerBlockShifts,
     });
   }
   if (elements.workerModalTitle) {
@@ -392,7 +391,7 @@ function closeWorkerModal() {
     workerSubmitButton: elements.workerSubmitButton,
     cancelEditButton: elements.cancelEditButton,
     workerModalTitle: elements.workerModalTitle,
-    workerBlockWeekdays: elements.workerBlockWeekdays,
+    workerBlockShifts: elements.workerBlockShifts,
   });
 }
 
