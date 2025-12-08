@@ -2,12 +2,17 @@
  * Renders schedule table with highlights and interactive controls.
  * @param {import("../types.js").Schedule | null} schedule
  * @param {{ columns?: number[]; cells?: Array<{ rowId: string; dayIndex: number }> }} highlights
- * @param {{ onSlotChange: (rowId: string, dayIndex: number, value: string | null) => void; onToggleLock: (rowId: string, dayIndex: number) => void; }} handlers
+ * @param {{
+ *  onSlotChange: (rowId: string, dayIndex: number, value: string | null) => void;
+ *  onToggleLock: (rowId: string, dayIndex: number) => void;
+ *  onToggleColumnLock: (dayIndex: number) => void;
+ *  onToggleRowLock: (rowId: string) => void;
+ * }} handlers
  * @param {{ scheduleOutput: HTMLElement; summaryCardsContainer: HTMLElement }} targets
  */
 export function renderSchedule(schedule, highlights, handlers, targets) {
   const { scheduleOutput, summaryCardsContainer } = targets;
-  const { onSlotChange, onToggleLock } = handlers;
+  const { onSlotChange, onToggleLock, onToggleColumnLock, onToggleRowLock } = handlers;
   scheduleOutput.innerHTML = "";
   if (!schedule) {
     scheduleOutput.classList.add("empty-state");
@@ -21,6 +26,11 @@ export function renderSchedule(schedule, highlights, handlers, targets) {
   const highlightedCells = new Set(
     (highlights.cells || []).map((cell) => `${cell.rowId}:${cell.dayIndex}`),
   );
+  const columnLockStates = schedule.days.map((_, index) =>
+    schedule.rows.length
+      ? schedule.rows.every((row) => Array.isArray(row.locks) && row.locks[index])
+      : false,
+  );
   const table = document.createElement("table");
   table.className = "schedule-table";
   const thead = document.createElement("thead");
@@ -31,7 +41,23 @@ export function renderSchedule(schedule, highlights, handlers, targets) {
 
   schedule.days.forEach((day, index) => {
     const th = document.createElement("th");
-    th.innerHTML = `<div><span class="day-name">${day.dow}</span><span class="day-number">${day.day}</span></div>`;
+    const headerContent = document.createElement("div");
+    headerContent.className = "day-header";
+    const lockButton = document.createElement("button");
+    lockButton.type = "button";
+    const isLockedCol = columnLockStates[index];
+    lockButton.className = isLockedCol ? "lock-btn locked header-lock-btn" : "lock-btn header-lock-btn";
+    lockButton.innerHTML = isLockedCol ? "🔒" : "🔓";
+    lockButton.title = isLockedCol ? "Odblokuj dzień" : "Zablokuj dzień";
+    lockButton.addEventListener("click", () => {
+      onToggleColumnLock(index);
+    });
+    headerContent.append(lockButton);
+
+    const label = document.createElement("div");
+    label.innerHTML = `<span class="day-name">${day.dow}</span><span class="day-number">${day.day}</span>`;
+    headerContent.append(label);
+    th.append(headerContent);
     if (day.isSaturday) {
       th.classList.add("day-saturday-header");
     }
@@ -50,7 +76,22 @@ export function renderSchedule(schedule, highlights, handlers, targets) {
   schedule.rows.forEach((row) => {
     const tr = document.createElement("tr");
     const th = document.createElement("th");
-    th.textContent = row.name;
+    const rowHeader = document.createElement("div");
+    rowHeader.className = "row-header";
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = row.name;
+    rowHeader.append(nameSpan);
+    const rowLocked = Array.isArray(row.locks) && row.locks.length ? row.locks.every(Boolean) : false;
+    const rowLockButton = document.createElement("button");
+    rowLockButton.type = "button";
+    rowLockButton.className = rowLocked ? "lock-btn locked header-lock-btn" : "lock-btn header-lock-btn";
+    rowLockButton.innerHTML = rowLocked ? "🔒" : "🔓";
+    rowLockButton.title = rowLocked ? "Odblokuj osobę" : "Zablokuj osobę";
+    rowLockButton.addEventListener("click", () => {
+      onToggleRowLock(row.id);
+    });
+    rowHeader.append(rowLockButton);
+    th.append(rowHeader);
     tr.append(th);
     row.slots.forEach((slot, index) => {
       const td = document.createElement("td");

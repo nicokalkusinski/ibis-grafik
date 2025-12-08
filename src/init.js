@@ -8,7 +8,7 @@ import { renderWorkers } from "./workers/list.js";
 import { buildSchedule } from "./schedule/engine.js";
 import { deriveScheduleInsights } from "./schedule/insights.js";
 import { renderSchedule, renderSummary, renderWarnings, updateSchedulePeriodText } from "./schedule/render.js";
-import { updateSlotValue, toggleCellLock } from "./schedule/locks.js";
+import { setAllLocks, toggleCellLock, toggleColumnLock, toggleRowLock, updateSlotValue } from "./schedule/locks.js";
 import { exportScheduleToJson, exportScheduleToPng } from "./io/exporters.js";
 import { importScheduleFromJson } from "./io/importers.js";
 import { readSettingsPayload, syncSettingsFormValues } from "./settings/form.js";
@@ -241,6 +241,20 @@ function wireControls() {
       }
     });
   }
+
+  if (elements.blockAllButton) {
+    elements.blockAllButton.addEventListener("click", () => {
+      setAllLocks(appState, true);
+      renderAppSchedule();
+    });
+  }
+
+  if (elements.unblockAllButton) {
+    elements.unblockAllButton.addEventListener("click", () => {
+      setAllLocks(appState, false);
+      renderAppSchedule();
+    });
+  }
 }
 
 function generateSchedule() {
@@ -306,6 +320,14 @@ function renderAppSchedule() {
       },
       onToggleLock: (rowId, dayIndex) => {
         toggleCellLock(appState, rowId, dayIndex);
+        renderAppSchedule();
+      },
+      onToggleColumnLock: (dayIndex) => {
+        toggleColumnLock(appState, dayIndex);
+        renderAppSchedule();
+      },
+      onToggleRowLock: (rowId) => {
+        toggleRowLock(appState, rowId);
         renderAppSchedule();
       },
     },

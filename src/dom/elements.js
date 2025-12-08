@@ -31,4 +31,6 @@ export const elements = {
   settingsMaxStreakAnyInput: document.querySelector("#settings-max-streak-any"),
   cancelSettingsButton: document.querySelector("#cancel-settings-btn"),
   workerBlockShifts: document.querySelector("#worker-block-shifts"),
+  blockAllButton: document.querySelector("#block-all-btn"),
+  unblockAllButton: document.querySelector("#unblock-all-btn"),
 };
