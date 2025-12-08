@@ -18,6 +18,14 @@ const workerModal = document.querySelector("#worker-modal");
 const workerModalTitle = document.querySelector("#modal-title");
 const openWorkerModalButton = document.querySelector("#open-worker-modal");
 const closeWorkerModalButton = document.querySelector("#close-worker-modal");
+const openSettingsModalButton = document.querySelector("#open-settings-modal");
+const closeSettingsModalButton = document.querySelector("#close-settings-modal");
+const settingsModal = document.querySelector("#settings-modal");
+const settingsForm = document.querySelector("#settings-form");
+const settingsMaxStreakDayInput = document.querySelector("#settings-max-streak-day");
+const settingsMaxStreakNightInput = document.querySelector("#settings-max-streak-night");
+const settingsMaxStreakAnyInput = document.querySelector("#settings-max-streak-any");
+const cancelSettingsButton = document.querySelector("#cancel-settings-btn");
 
 const MONTHS = [
   "Styczeń",
@@ -37,13 +45,15 @@ const MONTHS = [
 const DAY_NAMES = ["Nd", "Pn", "Wt", "Śr", "Cz", "Pt", "Sb"];
 
 const STORAGE_KEY = "receptionAgendaWorkers";
+const SETTINGS_STORAGE_KEY = "receptionAgendaSettings";
 const BUTTON_LABELS = {
   add: "Dodaj recepcjonistę",
   save: "Zapisz zmiany",
 };
-const MAX_STREAK = {
+const DEFAULT_MAX_STREAK = {
   D: 3,
   N: 2,
+  ANY: 3,
 };
 const BLOCK_TARGETS = {
   D: { min: 1, max: 3 },
@@ -65,12 +75,15 @@ const appState = {
   workers: [],
   editingWorkerId: null,
   currentSchedule: null,
+  settings: createDefaultSettings(),
 };
 
+hydrateSettingsFromStorage();
 hydrateWorkersFromStorage();
 initSelectors();
 workerForm.reset();
 setDefaultFormValues();
+syncSettingsFormValues();
 renderWorkers();
 updateSchedulePeriodText(Number(monthSelect.value), Number(yearSelect.value));
 scheduleOutput.classList.add("empty-state");
@@ -96,6 +109,36 @@ if (workerModal) {
   workerModal.addEventListener("cancel", (event) => {
     event.preventDefault();
     closeWorkerModal();
+  });
+}
+
+if (openSettingsModalButton) {
+  openSettingsModalButton.addEventListener("click", () => {
+    showSettingsModal();
+  });
+}
+
+if (closeSettingsModalButton) {
+  closeSettingsModalButton.addEventListener("click", () => {
+    closeSettingsModal();
+  });
+}
+
+if (cancelSettingsButton) {
+  cancelSettingsButton.addEventListener("click", () => {
+    closeSettingsModal();
+  });
+}
+
+if (settingsModal) {
+  settingsModal.addEventListener("click", (event) => {
+    if (event.target === settingsModal) {
+      closeSettingsModal();
+    }
+  });
+  settingsModal.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeSettingsModal();
   });
 }
 
@@ -135,19 +178,41 @@ cancelEditButton.addEventListener("click", () => {
 });
 
 generateButton.addEventListener("click", () => {
-  if (appState.workers.length === 0) {
-    appState.currentSchedule = null;
-    renderSchedule(null);
-    renderWarnings(["Najpierw dodaj co najmniej jednego recepcjonistę."]);
-    return;
-  }
-  const month = Number(monthSelect.value);
-  const year = Number(yearSelect.value);
-  const existingLocks = appState.currentSchedule ? appState.currentSchedule.schedule.rows : [];
-  const schedule = buildSchedule(appState.workers, month, year, existingLocks);
-  appState.currentSchedule = { schedule, month, year };
-  renderAppSchedule();
+  generateSchedule();
 });
+
+if (settingsForm) {
+  settingsForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const dayLimit = sanitizeNumber(
+      settingsMaxStreakDayInput ? settingsMaxStreakDayInput.value : null,
+      DEFAULT_MAX_STREAK.D,
+      { min: 1 },
+    );
+    const nightLimit = sanitizeNumber(
+      settingsMaxStreakNightInput ? settingsMaxStreakNightInput.value : null,
+      DEFAULT_MAX_STREAK.N,
+      { min: 1 },
+    );
+    const anyLimit = sanitizeNumber(
+      settingsMaxStreakAnyInput ? settingsMaxStreakAnyInput.value : null,
+      DEFAULT_MAX_STREAK.ANY,
+      { min: 1 },
+    );
+    appState.settings = {
+      maxStreak: {
+        D: dayLimit,
+        N: nightLimit,
+        ANY: anyLimit,
+      },
+    };
+    persistSettings();
+    closeSettingsModal();
+    if (appState.currentSchedule) {
+      renderAppSchedule();
+    }
+  });
+}
 
 monthSelect.addEventListener("change", () => {
   updateSchedulePeriodText(Number(monthSelect.value), Number(yearSelect.value));
@@ -186,6 +251,22 @@ if (importJsonInput) {
       importJsonInput.value = "";
     }
   });
+}
+
+function generateSchedule() {
+  if (appState.workers.length === 0) {
+    appState.currentSchedule = null;
+    renderSchedule(null);
+    renderWarnings(["Najpierw dodaj co najmniej jednego recepcjonistę."]);
+    return false;
+  }
+  const month = Number(monthSelect.value);
+  const year = Number(yearSelect.value);
+  const existingLocks = appState.currentSchedule ? appState.currentSchedule.schedule.rows : [];
+  const schedule = buildSchedule(appState.workers, month, year, existingLocks);
+  appState.currentSchedule = { schedule, month, year };
+  renderAppSchedule();
+  return true;
 }
 
 function initSelectors() {
@@ -272,7 +353,11 @@ function renderAppSchedule() {
   const insights = deriveScheduleInsights(schedule, month, year, appState.workers);
   renderSchedule(schedule, {
     columns: insights.coverage.missingDayIndexes,
-    cells: [...insights.nightToDay.cells, ...insights.blockedDay.cells],
+    cells: [
+      ...insights.nightToDay.cells,
+      ...insights.blockedDay.cells,
+      ...insights.streaks.cells,
+    ],
   });
   renderWarnings(insights.warnings);
   renderSummary(insights.summary);
@@ -517,6 +602,28 @@ function closeWorkerModal() {
   exitEditingMode();
 }
 
+function showSettingsModal() {
+  syncSettingsFormValues();
+  if (!settingsModal) {
+    return;
+  }
+  if (typeof settingsModal.showModal === "function") {
+    settingsModal.showModal();
+  } else {
+    settingsModal.setAttribute("open", "true");
+  }
+}
+
+function closeSettingsModal() {
+  if (settingsModal) {
+    if (typeof settingsModal.close === "function") {
+      settingsModal.close();
+    } else {
+      settingsModal.removeAttribute("open");
+    }
+  }
+}
+
 function extractWorkerPayload(formData) {
   const rawName = formData.get("worker-name");
   const name = rawName ? rawName.trim() : "";
@@ -570,6 +677,66 @@ function setDefaultFormValues() {
   workerForm.querySelector("#worker-preference").value = DEFAULT_FORM_VALUES.preference;
   workerForm.querySelector("#worker-limit-hours").checked = false;
   setCheckboxValues(workerForm.querySelector("#worker-block-weekdays"), []);
+}
+
+function createDefaultSettings() {
+  return {
+    maxStreak: {
+      D: DEFAULT_MAX_STREAK.D,
+      N: DEFAULT_MAX_STREAK.N,
+      ANY: DEFAULT_MAX_STREAK.ANY,
+    },
+  };
+}
+
+function hydrateSettingsFromStorage() {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    appState.settings = createDefaultSettings();
+    return;
+  }
+  try {
+    const stored = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!stored) {
+      appState.settings = createDefaultSettings();
+      return;
+    }
+    const parsed = JSON.parse(stored);
+    const day = sanitizeNumber(parsed?.maxStreak?.D, DEFAULT_MAX_STREAK.D, { min: 1 });
+    const night = sanitizeNumber(parsed?.maxStreak?.N, DEFAULT_MAX_STREAK.N, { min: 1 });
+    const any = sanitizeNumber(parsed?.maxStreak?.ANY, DEFAULT_MAX_STREAK.ANY, { min: 1 });
+    appState.settings = {
+      maxStreak: {
+        D: day,
+        N: night,
+        ANY: any,
+      },
+    };
+  } catch {
+    appState.settings = createDefaultSettings();
+  }
+}
+
+function persistSettings() {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    return;
+  }
+  try {
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(appState.settings));
+  } catch {
+    // ignore storage failures
+  }
+}
+
+function syncSettingsFormValues() {
+  if (!settingsMaxStreakDayInput || !settingsMaxStreakNightInput) {
+    return;
+  }
+  const streaks = appState.settings?.maxStreak || DEFAULT_MAX_STREAK;
+  settingsMaxStreakDayInput.value = String(streaks.D ?? DEFAULT_MAX_STREAK.D);
+  settingsMaxStreakNightInput.value = String(streaks.N ?? DEFAULT_MAX_STREAK.N);
+  if (settingsMaxStreakAnyInput) {
+    settingsMaxStreakAnyInput.value = String(streaks.ANY ?? DEFAULT_MAX_STREAK.ANY);
+  }
 }
 
 function deleteWorker(workerId) {
@@ -650,6 +817,24 @@ function sanitizeNumber(value, fallback, options = {}) {
     return fallback;
   }
   return parsed;
+}
+
+function getMaxStreakLimit(symbol) {
+  const maxStreak = appState.settings?.maxStreak || DEFAULT_MAX_STREAK;
+  const limit = maxStreak[symbol];
+  if (!Number.isFinite(limit)) {
+    return DEFAULT_MAX_STREAK[symbol] || 3;
+  }
+  return limit;
+}
+
+function getMaxShiftStreakLimit() {
+  const maxStreak = appState.settings?.maxStreak || DEFAULT_MAX_STREAK;
+  const limit = maxStreak.ANY;
+  if (!Number.isFinite(limit)) {
+    return DEFAULT_MAX_STREAK.ANY;
+  }
+  return limit;
 }
 
 function getCheckboxValues(container) {
@@ -963,6 +1148,18 @@ function formatDate(date) {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+function formatDateRange(startDate, endDate) {
+  if (!startDate || !endDate) {
+    return "";
+  }
+  const start = formatDate(startDate);
+  const end = formatDate(endDate);
+  if (start === end) {
+    return start;
+  }
+  return `${start} - ${end}`;
+}
+
 function updateSchedulePeriodText(month, year) {
   if (!schedulePeriod) {
     return;
@@ -979,18 +1176,21 @@ function deriveScheduleInsights(schedule, month, year, workers) {
   const coverage = computeCoverage(schedule, month, year);
   const nightToDay = computeNightToDayWarnings(schedule, month, year);
   const blockedDay = computeBlockedDayWarnings(schedule, appState.workers);
+  const streaks = computeStreakWarnings(schedule);
   const summary = computeSummaryFromSchedule(schedule, workers);
   const summaryWarnings = summary.flatMap((entry) => entry.warnings);
   return {
     coverage,
     nightToDay,
     blockedDay,
+    streaks,
     summary,
     warnings: [
       ...(schedule?.warnings || []),
       ...coverage.warnings,
       ...nightToDay.warnings,
       ...blockedDay.warnings,
+      ...streaks.warnings,
       ...summaryWarnings,
     ],
   };
@@ -1092,6 +1292,101 @@ function computeBlockedDayWarnings(schedule, workers) {
         );
       }
     });
+  });
+
+  return { cells, warnings };
+}
+
+function computeStreakWarnings(schedule) {
+  if (!schedule) {
+    return { cells: [], warnings: [] };
+  }
+  const cells = [];
+  const warnings = [];
+  const dayLimit = Math.max(getMaxStreakLimit("D"), 1);
+  const nightLimit = Math.max(getMaxStreakLimit("N"), 1);
+  const anyLimit = Math.max(getMaxShiftStreakLimit(), 1);
+
+  schedule.rows.forEach((row) => {
+    const slots = Array.isArray(row.slots) ? row.slots : [];
+    let current = null;
+    let startIndex = 0;
+    let length = 0;
+
+    const flush = (endIndex) => {
+      if (!current || length <= 0) {
+        return;
+      }
+      const limit = current === "D" ? dayLimit : current === "N" ? nightLimit : null;
+      if (!limit || length <= limit) {
+        return;
+      }
+      for (let i = startIndex; i <= endIndex; i += 1) {
+        cells.push({ rowId: row.id, dayIndex: i });
+      }
+      const startMeta = schedule.days[startIndex];
+      const endMeta = schedule.days[endIndex];
+      const rangeText =
+        startMeta?.date && endMeta?.date
+          ? formatDateRange(startMeta.date, endMeta.date)
+          : `${startIndex + 1}-${endIndex + 1}`;
+      const label = current === "D" ? "dni" : "nocy";
+      warnings.push(`${row.name} ma ${length} ${label} z rzędu (${rangeText}).`);
+    };
+
+    slots.forEach((slot, index) => {
+      if (slot === "D" || slot === "N") {
+        if (slot === current) {
+          length += 1;
+        } else {
+          flush(index - 1);
+          current = slot;
+          startIndex = index;
+          length = 1;
+        }
+      } else {
+        flush(index - 1);
+        current = null;
+        length = 0;
+      }
+    });
+
+    flush(slots.length - 1);
+
+    // Combined streaks (any shifts back-to-back)
+    let anyStart = null;
+    let anyLength = 0;
+    const flushAny = (endIndex) => {
+      if (anyStart === null || anyLength <= anyLimit) {
+        return;
+      }
+      for (let i = anyStart; i <= endIndex; i += 1) {
+        cells.push({ rowId: row.id, dayIndex: i });
+      }
+      const startMeta = schedule.days[anyStart];
+      const endMeta = schedule.days[endIndex];
+      const rangeText =
+        startMeta?.date && endMeta?.date
+          ? formatDateRange(startMeta.date, endMeta.date)
+          : `${anyStart + 1}-${endIndex + 1}`;
+      warnings.push(`${row.name} ma ${anyLength} zmian z rzędu (${rangeText}).`);
+    };
+
+    slots.forEach((slot, index) => {
+      if (slot === "D" || slot === "N") {
+        if (anyStart === null) {
+          anyStart = index;
+          anyLength = 1;
+        } else {
+          anyLength += 1;
+        }
+      } else {
+        flushAny(index - 1);
+        anyStart = null;
+        anyLength = 0;
+      }
+    });
+    flushAny(slots.length - 1);
   });
 
   return { cells, warnings };
@@ -1429,10 +1724,13 @@ function updateBlockState(entry, symbol, index) {
 
 function getRandomBlockLength(symbol) {
   const range = BLOCK_TARGETS[symbol];
+  const streakLimit = Math.max(getMaxStreakLimit(symbol), 1);
   if (!range) {
-    return 1;
+    return streakLimit;
   }
-  return randomInt(range.min, range.max);
+  const min = Math.min(range.min, streakLimit);
+  const max = streakLimit;
+  return randomInt(min, max);
 }
 
 function randomInt(min, max) {
@@ -1460,6 +1758,6 @@ function countConsecutiveShifts(slots, index, symbol) {
 }
 
 function exceedsConsecutiveLimit(slots, index, symbol) {
-  const limit = MAX_STREAK[symbol] || 3;
+  const limit = Math.max(getMaxStreakLimit(symbol), 1);
   return countConsecutiveShifts(slots, index, symbol) >= limit;
 }

@@ -169,6 +169,24 @@ main {
   accent-color: #e11d48;
 }
 
+.hidden-field {
+  display: none;
+}
+
+.settings-row {
+  grid-template-columns: 1fr;
+}
+
+#settings-modal {
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+#settings-modal::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
 .add-worker-btn {
   width: fit-content;
 }
@@ -549,6 +567,10 @@ main {
 .modal-body {
   padding: 0 0.9rem 0.9rem;
   overflow-y: auto;
+}
+
+.modal-card--narrow {
+  max-width: 520px;
 }
 
 .modal-columns {

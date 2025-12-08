@@ -31,6 +31,7 @@
           <div class="schedule-actions">
             <div class="action-group">
               <button type="button" class="ghost-btn small" id="open-worker-modal">Zarządzaj kadrą</button>
+              <button type="button" class="ghost-btn small" id="open-settings-modal">Opcje grafiku</button>
             </div>
             <div class="action-group">
               <button type="button" class="ghost-btn small" id="export-btn">Zapisz PNG</button>
@@ -111,7 +112,7 @@
                 />
               </div>
               <div class="form-group inline">
-                <div>
+                <div class="shift-hours-field hidden-field">
                   <label for="worker-shift-hours">Długość zmiany (godz.)</label>
                   <input
                     id="worker-shift-hours"
@@ -192,6 +193,63 @@
               <ul id="worker-list" class="worker-list"></ul>
             </div>
           </div>
+        </section>
+      </div>
+    </dialog>
+
+    <dialog id="settings-modal">
+      <div class="modal-card">
+        <header class="modal-header">
+          <div>
+            <p class="modal-eyebrow">Grafik</p>
+            <h2>Opcje grafiku</h2>
+          </div>
+          <button type="button" class="close-btn" id="close-settings-modal" aria-label="Zamknij">
+            ×
+          </button>
+        </header>
+        <section class="modal-body">
+          <form id="settings-form" class="worker-form">
+            <div class="form-group settings-row">
+              <div>
+                <label for="settings-max-streak-day">Maks. dni pod rząd (D)</label>
+                <input
+                  id="settings-max-streak-day"
+                  name="settings-max-streak-day"
+                  type="number"
+                  min="1"
+                  max="10"
+                  step="1"
+                />
+              </div>
+              <div>
+                <label for="settings-max-streak-night">Maks. nocy pod rząd (N)</label>
+                <input
+                  id="settings-max-streak-night"
+                  name="settings-max-streak-night"
+                  type="number"
+                  min="1"
+                  max="10"
+                  step="1"
+                />
+              </div>
+              <div>
+                <label for="settings-max-streak-any">Maks. zmian pod rząd (D lub N)</label>
+                <input
+                  id="settings-max-streak-any"
+                  name="settings-max-streak-any"
+                  type="number"
+                  min="1"
+                  max="15"
+                  step="1"
+                />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" id="settings-submit-btn" class="add-worker-btn">Zapisz</button>
+              <button type="button" id="cancel-settings-btn" class="ghost-btn">Anuluj</button>
+            </div>
+          </form>
         </section>
       </div>
     </dialog>
