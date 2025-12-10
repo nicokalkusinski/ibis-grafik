@@ -2,6 +2,36 @@ import { MONTHS } from "../constants/dates.js";
 import { computeSummaryFromSchedule } from "../schedule/summary.js";
 
 /**
+ * Builds a JSON-safe export payload from state.
+ * @param {import("../state/appState.js").AppState} appState
+ * @returns {{
+ *  version: string;
+ *  exportedAt: string;
+ *  month: number;
+ *  year: number;
+ *  notes: string;
+ *  workers: import("../types.js").Worker[];
+ *  schedule: import("../types.js").Schedule;
+ * }}
+ */
+export function createExportPayload(appState) {
+  if (!appState.currentSchedule) {
+    throw new Error("Brak grafiku do eksportu.");
+  }
+  const rawNotes = appState.notes ?? "";
+  const notes = typeof rawNotes === "string" ? rawNotes : String(rawNotes);
+  return {
+    version: "1.0.0",
+    exportedAt: new Date().toISOString(),
+    month: appState.currentSchedule.month,
+    year: appState.currentSchedule.year,
+    notes,
+    workers: appState.workers,
+    schedule: appState.currentSchedule.schedule,
+  };
+}
+
+/**
  * Exports current schedule to PNG using canvas rendering.
  * @param {import("../state/appState.js").AppState} appState
  */
@@ -172,14 +202,8 @@ export function exportScheduleToJson(appState) {
     alert("Brak grafiku do eksportu.");
     return;
   }
-  const payload = {
-    version: "1.0.0",
-    exportedAt: new Date().toISOString(),
-    month: appState.currentSchedule.month,
-    year: appState.currentSchedule.year,
-    workers: appState.workers,
-    schedule: appState.currentSchedule.schedule,
-  };
+  const payload = createExportPayload(appState);
+  payload.notes = typeof appState.notes === "string" ? appState.notes : payload.notes;
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

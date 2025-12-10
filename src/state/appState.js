@@ -6,6 +6,7 @@ import { DEFAULT_MAX_STREAK } from "../constants/defaults.js";
  * @property {string | null} editingWorkerId
  * @property {{ schedule: import("../types.js").Schedule | null, month: number, year: number } | null} currentSchedule
  * @property {import("../types.js").Settings} settings
+ * @property {string} notes
  */
 
 /**
@@ -13,7 +14,7 @@ import { DEFAULT_MAX_STREAK } from "../constants/defaults.js";
  * @returns {import("../types.js").Settings}
  */
 export function createDefaultSettings() {
- return {
+  return {
     maxStreak: {
       D: DEFAULT_MAX_STREAK.D,
       N: DEFAULT_MAX_STREAK.N,
@@ -28,4 +29,5 @@ export const appState = {
   editingWorkerId: null,
   currentSchedule: null,
   settings: createDefaultSettings(),
+  notes: "",
 };

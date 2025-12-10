@@ -8,15 +8,22 @@ import { sanitizeNumber } from "../utils/numbers.js";
  * @param {unknown} data
  * @param {import("../state/appState.js").AppState} appState
  * @param {{ monthSelect: HTMLSelectElement; yearSelect: HTMLSelectElement }} controls
- * @param {(state: import("../state/appState.js").AppState) => void} persistWorkers
+ * @param {{
+ *  persistWorkers: (state: import("../state/appState.js").AppState) => void;
+ *  persistNotes?: (state: import("../state/appState.js").AppState) => void;
+ * }} persistence
  * @returns {boolean}
  */
-export function importScheduleFromJson(data, appState, controls, persistWorkers) {
+export function importScheduleFromJson(data, appState, controls, persistence = {}) {
   try {
     if (!data || typeof data !== "object") {
       throw new Error("Struktura JSON jest nieprawidłowa.");
     }
-    const { workers, schedule, month, year } = /** @type {any} */ (data);
+    const { persistWorkers, persistNotes } = persistence;
+    if (typeof persistWorkers !== "function") {
+      throw new Error("Brakuje wymaganej funkcji zapisu pracowników.");
+    }
+    const { workers, schedule, month, year, notes } = /** @type {any} */ (data);
     if (!Array.isArray(workers) || !schedule) {
       throw new Error("Brakuje wymaganych pól (workers/schedule).");
     }
@@ -37,6 +44,13 @@ export function importScheduleFromJson(data, appState, controls, persistWorkers)
       month: targetMonth,
       year: targetYear,
     };
+    const hasImportedNotes = typeof notes === "string";
+    if (hasImportedNotes) {
+      appState.notes = notes;
+      if (typeof persistNotes === "function") {
+        persistNotes(appState);
+      }
+    }
     return true;
   } catch (error) {
     alert("Nie udało się wczytać pliku JSON.");

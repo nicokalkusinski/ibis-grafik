@@ -267,11 +267,8 @@ export function applySlotClasses(cell, value) {
  * @param {{ list: HTMLElement; section: HTMLElement | null }} targets
  */
 export function renderWarnings(warnings, targets) {
-  const { list, section } = targets;
+  const { list } = targets;
   list.innerHTML = "";
-  if (section) {
-    section.hidden = warnings.length === 0;
-  }
   if (!warnings.length) {
     return;
   }

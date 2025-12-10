@@ -60,9 +60,20 @@
           <p>Dodaj recepcjonistów i kliknij „Generuj grafik”.</p>
         </div>
         <section class="summary-sections">
-          <div id="warnings-section" class="panel-block" hidden>
-            <h3>Ostrzeżenia</h3>
-            <ul id="warnings-list"></ul>
+          <div class="summary-grid">
+            <div id="notes-section" class="panel-block">
+              <h3 id="notes-heading">Notatki</h3>
+              <textarea
+                id="notes-input"
+                class="notes-textarea"
+                aria-labelledby="notes-heading"
+                placeholder="Dodaj notatki do tego grafiku"
+              ></textarea>
+            </div>
+            <div id="warnings-section" class="panel-block">
+              <h3>Ostrzeżenia</h3>
+              <ul id="warnings-list"></ul>
+            </div>
           </div>
           <div class="panel-block">
             <h3>Podsumowania</h3>
@@ -327,6 +338,6 @@
       </div>
     </dialog>
 
-    <script type="module" src="./src/init.js"></script>
+    <script type="module" src="./src/init.js?v=notes-2"></script>
   </body>
 </html>

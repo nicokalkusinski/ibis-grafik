@@ -670,10 +670,34 @@ main {
   gap: 0.75rem;
 }
 
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.75rem;
+  align-items: start;
+}
+
 .panel-block {
   border: 1px solid #e8ecfb;
   border-radius: 10px;
   padding: 0.75rem;
+  background: #fff;
+}
+
+.notes-textarea {
+  width: 100%;
+  min-height: 150px;
+  border: 1px solid #e8ecfb;
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  font: inherit;
+  resize: vertical;
+  background: #f8fafc;
+}
+
+.notes-textarea:focus {
+  outline: 2px solid #1f62ff;
+  outline-offset: 1px;
   background: #fff;
 }
 

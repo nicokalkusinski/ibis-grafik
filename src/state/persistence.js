@@ -1,5 +1,5 @@
 import { DEFAULT_FORM_NUMBERS, DEFAULT_FORM_VALUES } from "../constants/defaults.js";
-import { STORAGE_KEY, SETTINGS_STORAGE_KEY } from "../constants/storageKeys.js";
+import * as storageKeys from "../constants/storageKeys.js";
 import { sanitizeNumber } from "../utils/numbers.js";
 import { createDefaultSettings } from "./appState.js";
 import { isHexColor, randomHexColor } from "../utils/colors.js";
@@ -14,7 +14,7 @@ export function hydrateSettingsFromStorage(appState) {
     return;
   }
   try {
-    const stored = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
+    const stored = window.localStorage.getItem(storageKeys.SETTINGS_STORAGE_KEY);
     if (!stored) {
       appState.settings = createDefaultSettings();
       return;
@@ -46,7 +46,44 @@ export function persistSettings(appState) {
     return;
   }
   try {
-    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(appState.settings));
+    window.localStorage.setItem(storageKeys.SETTINGS_STORAGE_KEY, JSON.stringify(appState.settings));
+  } catch {
+    // ignore storage failures
+  }
+}
+
+/**
+ * Hydrates notes from localStorage into appState.
+ * @param {import("./appState.js").AppState} appState
+ */
+export function hydrateNotesFromStorage(appState) {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    appState.notes = "";
+    return;
+  }
+  try {
+    const stored = window.localStorage.getItem(
+      storageKeys.NOTES_STORAGE_KEY || "receptionAgendaNotes",
+    );
+    appState.notes = typeof stored === "string" ? stored : "";
+  } catch {
+    appState.notes = "";
+  }
+}
+
+/**
+ * Persists notes to localStorage.
+ * @param {import("./appState.js").AppState} appState
+ */
+export function persistNotes(appState) {
+  if (typeof window === "undefined" || typeof window.localStorage === "undefined") {
+    return;
+  }
+  try {
+    window.localStorage.setItem(
+      storageKeys.NOTES_STORAGE_KEY || "receptionAgendaNotes",
+      appState.notes || "",
+    );
   } catch {
     // ignore storage failures
   }
@@ -61,7 +98,7 @@ export function hydrateWorkersFromStorage(appState) {
     return;
   }
   try {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
+    const stored = window.localStorage.getItem(storageKeys.STORAGE_KEY);
     if (!stored) {
       return;
     }
@@ -111,7 +148,7 @@ export function persistWorkers(appState) {
     return;
   }
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(appState.workers));
+    window.localStorage.setItem(storageKeys.STORAGE_KEY, JSON.stringify(appState.workers));
   } catch {
     // ignore storage failures
   }

@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
+import {
+  importScheduleFromJson,
+  normalizeImportedSchedule,
+  normalizeImportedWorkers,
+} from "../src/io/importers.js";
+import { createExportPayload } from "../src/io/exporters.js";
 import { buildSchedule } from "../src/schedule/engine.js";
 import { deriveScheduleInsights } from "../src/schedule/insights.js";
 import { reorderScheduleRows } from "../src/schedule/reorder.js";
-import { normalizeImportedWorkers } from "../src/io/importers.js";
-import { isHexColor } from "../src/utils/colors.js";
 import { computeSummaryFromSchedule } from "../src/schedule/summary.js";
-import { normalizeImportedSchedule } from "../src/io/importers.js";
+import { isHexColor } from "../src/utils/colors.js";
 import { sanitizeNumber } from "../src/utils/numbers.js";
 
 const tests = [];
@@ -56,6 +60,96 @@ test("normalizeImportedSchedule trims slots and locks", () => {
   assert.equal(normalized.rows[0].slots[0], "D");
   assert.equal(normalized.rows[0].slots[1], null);
   assert.equal(normalized.rows[0].locks[1], false);
+});
+
+test("importScheduleFromJson restores notes and persists them", () => {
+  const appState = {
+    workers: [],
+    editingWorkerId: null,
+    currentSchedule: null,
+    settings: { maxStreak: { D: 3, N: 2, ANY: 3 } },
+    notes: "",
+  };
+  const controls = { monthSelect: { value: "1" }, yearSelect: { value: "2024" } };
+  let persistedNotes = "";
+  let workersPersisted = false;
+  const payload = {
+    workers: [
+      {
+        id: "w1",
+        name: "Alex",
+        order: 0,
+        maxHours: 168,
+        shiftHours: 12,
+        preference: "balanced",
+        enforceHourCap: false,
+        blockedShifts: {},
+        color: "#abcdef",
+      },
+    ],
+    schedule: {
+      days: [{ day: 1 }],
+      rows: [{ id: "w1", name: "Alex", slots: ["D"], locks: [false] }],
+    },
+    month: 5,
+    year: 2030,
+    notes: "Plan zmian dla maja.",
+  };
+  const ok = importScheduleFromJson(payload, appState, controls, {
+    persistWorkers: (state) => {
+      workersPersisted = Array.isArray(state.workers) && state.workers.length === 1;
+    },
+    persistNotes: (state) => {
+      persistedNotes = state.notes;
+    },
+  });
+  assert.equal(ok, true);
+  assert.equal(appState.notes, "Plan zmian dla maja.");
+  assert.equal(persistedNotes, "Plan zmian dla maja.");
+  assert.equal(workersPersisted, true);
+  assert.equal(appState.currentSchedule?.month, 5);
+  assert.equal(appState.currentSchedule?.year, 2030);
+  assert.equal(controls.monthSelect.value, "5");
+  assert.equal(controls.yearSelect.value, "2030");
+});
+
+test("importScheduleFromJson keeps existing notes when payload lacks them", () => {
+  const appState = {
+    workers: [],
+    editingWorkerId: null,
+    currentSchedule: null,
+    settings: { maxStreak: { D: 3, N: 2, ANY: 3 } },
+    notes: "Zostaw stare notatki",
+  };
+  const controls = { monthSelect: { value: "2" }, yearSelect: { value: "2024" } };
+  const payload = {
+    workers: [],
+    schedule: { days: [], rows: [] },
+    month: 2,
+    year: 2024,
+  };
+  const ok = importScheduleFromJson(payload, appState, controls, {
+    persistWorkers: () => {},
+  });
+  assert.equal(ok, true);
+  assert.equal(appState.notes, "Zostaw stare notatki");
+});
+
+test("createExportPayload always includes notes string", () => {
+  const appState = {
+    workers: [],
+    editingWorkerId: null,
+    currentSchedule: {
+      month: 1,
+      year: 2025,
+      schedule: { days: [], rows: [], summary: [], warnings: [] },
+    },
+    settings: { maxStreak: { D: 3, N: 2, ANY: 3 } },
+    notes: undefined,
+  };
+  const payload = createExportPayload(appState);
+  assert.equal(Object.prototype.hasOwnProperty.call(payload, "notes"), true);
+  assert.equal(payload.notes, "");
 });
 
 test("buildSchedule respects locked cells", () => {

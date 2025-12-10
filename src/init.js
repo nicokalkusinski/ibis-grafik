@@ -1,6 +1,13 @@
 import { MONTHS } from "./constants/dates.js";
 import { appState } from "./state/appState.js";
-import { hydrateSettingsFromStorage, hydrateWorkersFromStorage, persistSettings, persistWorkers } from "./state/persistence.js";
+import {
+  hydrateNotesFromStorage,
+  hydrateSettingsFromStorage,
+  hydrateWorkersFromStorage,
+  persistNotes,
+  persistSettings,
+  persistWorkers,
+} from "./state/persistence.js";
 import { elements } from "./dom/elements.js";
 import { initSelectors } from "./dom/selectors.js";
 import { extractWorkerPayload, exitEditingMode, setDefaultFormValues, startEditingWorker } from "./workers/form.js";
@@ -10,8 +17,8 @@ import { deriveScheduleInsights } from "./schedule/insights.js";
 import { renderSchedule, renderSummary, renderWarnings, updateSchedulePeriodText } from "./schedule/render.js";
 import { setAllLocks, toggleCellLock, toggleColumnLock, toggleRowLock, updateSlotValue } from "./schedule/locks.js";
 import { reorderScheduleRows } from "./schedule/reorder.js";
-import { exportScheduleToJson, exportScheduleToPng } from "./io/exporters.js";
-import { importScheduleFromJson } from "./io/importers.js";
+import { exportScheduleToJson, exportScheduleToPng } from "./io/exporters.js?v=notes-2";
+import { importScheduleFromJson } from "./io/importers.js?v=notes-2";
 import { readSettingsPayload, syncSettingsFormValues } from "./settings/form.js";
 import { computeSummaryFromSchedule } from "./schedule/summary.js";
 import { createWorkerId } from "./utils/id.js";
@@ -19,6 +26,7 @@ import { isHexColor } from "./utils/colors.js";
 
 hydrateSettingsFromStorage(appState);
 hydrateWorkersFromStorage(appState);
+hydrateNotesFromStorage(appState);
 initSelectors(elements.monthSelect, elements.yearSelect, MONTHS);
 elements.workerForm.reset();
 setDefaultFormValues({
@@ -32,6 +40,7 @@ syncSettingsFormValues(appState, {
   anyInput: elements.settingsMaxStreakAnyInput,
   useWorkerColors: elements.settingsUseWorkerColors,
 });
+syncNotesField(appState.notes);
 renderWorkers(appState, {
   workerListElement: elements.workerListElement,
   workerRowTemplate: elements.workerRowTemplate,
@@ -46,6 +55,7 @@ wireModals();
 wireWorkerForm();
 wireSettingsForm();
 wireControls();
+wireNotesField();
 
 function wireModals() {
   if (elements.openWorkerModalButton) {
@@ -215,6 +225,7 @@ function wireControls() {
 
   if (elements.exportJsonButton) {
     elements.exportJsonButton.addEventListener("click", () => {
+      syncNotesFromField();
       exportScheduleToJson(appState);
     });
   }
@@ -232,7 +243,7 @@ function wireControls() {
           data,
           appState,
           { monthSelect: elements.monthSelect, yearSelect: elements.yearSelect },
-          persistWorkers,
+          { persistWorkers, persistNotes },
         );
         if (ok) {
           renderWorkers(appState, {
@@ -242,6 +253,7 @@ function wireControls() {
             onEdit: handleStartEdit,
             onDelete: deleteWorker,
           });
+          syncNotesField(appState.notes);
           renderAppSchedule();
         }
       } catch (error) {
@@ -274,6 +286,17 @@ function wireControls() {
   }
 }
 
+function wireNotesField() {
+  if (!elements.notesInput) {
+    return;
+  }
+  elements.notesInput.addEventListener("input", (event) => {
+    const value = typeof event.target.value === "string" ? event.target.value : "";
+    appState.notes = value;
+    persistNotes(appState);
+  });
+}
+
 function generateSchedule() {
   if (appState.workers.length === 0) {
     appState.currentSchedule = null;
@@ -303,6 +326,7 @@ function generateSchedule() {
 }
 
 function renderAppSchedule() {
+  syncNotesField(appState.notes);
   const selectedMonth = appState.currentSchedule ? appState.currentSchedule.month : Number(elements.monthSelect.value);
   const selectedYear = appState.currentSchedule ? appState.currentSchedule.year : Number(elements.yearSelect.value);
   updateSchedulePeriodText(selectedMonth, selectedYear, elements.schedulePeriod, MONTHS);
@@ -509,6 +533,22 @@ function closeSettingsModal() {
       elements.settingsModal.removeAttribute("open");
     }
   }
+}
+
+function syncNotesField(value) {
+  if (!elements.notesInput) {
+    return;
+  }
+  elements.notesInput.value = value || "";
+}
+
+function syncNotesFromField() {
+  if (!elements.notesInput) {
+    return;
+  }
+  const value = typeof elements.notesInput.value === "string" ? elements.notesInput.value : "";
+  appState.notes = value;
+  persistNotes(appState);
 }
 
 function noopHandlers() {
