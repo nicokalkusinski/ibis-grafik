@@ -484,17 +484,20 @@ main {
 
 .shift-day {
   color: #0c6b2c;
-  font-weight: 600;
+  font-weight: 700;
+  background: #e6f7eb;
 }
 
 .shift-night {
-  color: #673ab7;
-  font-weight: 600;
+  color: #4b2ca1;
+  font-weight: 700;
+  background: #efe7ff;
 }
 
 .shift-holiday {
   color: #0f4c81;
-  font-weight: 600;
+  font-weight: 700;
+  background: #e6f2ff;
 }
 
 .shift-off {
@@ -519,11 +522,23 @@ main {
   background: #fff3f5;
 }
 
+.schedule-table td.shift-day {
+  background: #e6f7eb !important;
+}
+
+.schedule-table td.shift-night {
+  background: #efe7ff !important;
+}
+
+.schedule-table td.shift-holiday {
+  background: #e6f2ff !important;
+}
+
 .slot-select {
   border: none;
   background: transparent;
   text-align: center;
-  font-weight: 600;
+  font-weight: 700;
   color: inherit;
   padding: 0.1rem 0;
   border-radius: 6px;
