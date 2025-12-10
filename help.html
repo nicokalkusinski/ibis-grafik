@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pomoc — Grafik Recepcji</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .help-container {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 24px;
+        background: #ffffff;
+      }
+      .help-container h1,
+      .help-container h2,
+      .help-container h3 {
+        margin: 0 0 12px;
+      }
+      .help-container p,
+      .help-container li {
+        color: #0f172a;
+        line-height: 1.6;
+      }
+      .help-container ul {
+        padding-left: 20px;
+      }
+      .help-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 16px;
+        border-radius: 8px;
+        margin: 16px 0;
+      }
+      .help-top-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .help-top-actions a {
+        color: #0f4c81;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .tag {
+        display: inline-block;
+        margin-top: 4px;
+        margin-right: 6px;
+        padding: 2px 6px;
+        background: #e2e8f0;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="help-container">
+      <div class="help-top-actions">
+        <a href="docs/user-onboarding-guide-pl.md" target="_blank" rel="noopener noreferrer"
+          >Zobacz wersję Markdown</a
+        >
+        <a href="index.html">Wróć do grafiku</a>
+      </div>
+      <h1>Grafik Recepcji — Pomoc</h1>
+      <p>
+        Ten przewodnik prowadzi przez wszystkie funkcje aplikacji. Zawiera kroki startowe, legendę,
+        opis przycisków, działanie blokad i generatora oraz eksport/import danych.
+      </p>
+
+      <div class="help-card">
+        <h2>Szybki start</h2>
+        <ol>
+          <li>Otwórz aplikację i kliknij <strong>Zarządzaj kadrą</strong>, dodaj przynajmniej jedną osobę.</li>
+          <li>Opcjonalnie ustaw limity w <strong>Opcje grafiku</strong> i zaznacz kolory.</li>
+          <li>Wybierz miesiąc i rok, kliknij <strong>Generuj grafik</strong>.</li>
+          <li>Sprawdź ostrzeżenia, popraw komórki (D/N/U/puste) i zablokuj to, co ma zostać.</li>
+          <li>Ponownie kliknij <strong>Generuj grafik</strong>; zablokowane pola nie zmienią się.</li>
+          <li>Eksportuj: <strong>Zapisz PNG</strong> (obraz) lub <strong>Eksport JSON</strong> (kopia). <strong>Import JSON</strong> przywraca zapis.</li>
+        </ol>
+      </div>
+
+      <h2>Legenda i skróty</h2>
+      <ul>
+        <li><strong>D</strong> — zmiana dzienna.</li>
+        <li><strong>N</strong> — zmiana nocna.</li>
+        <li><strong>U</strong> — urlop/wolne (ustawiasz ręcznie).</li>
+        <li><strong>Puste</strong> — brak przydziału / wolne.</li>
+        <li><strong>Kłódka</strong> — blokuje komórkę, kolumnę lub cały wiersz pracownika.</li>
+        <li><strong>Żółte podświetlenia</strong> — braki lub naruszone zasady (streak, blokada, N→D).</li>
+        <li><strong>Szare podświetlenia</strong> — komórki zablokowane, nie zmienią się przy ponownej generacji.</li>
+      </ul>
+
+      <h2>Układ ekranu</h2>
+      <ul>
+        <li><strong>Górny pasek</strong>: wybór miesiąca/roku i <strong>Generuj grafik</strong> (tworzy/odświeża tabelę).</li>
+        <li>
+          <strong>Akcje grafiku</strong>:
+          <span class="tag">Zarządzaj kadrą</span>
+          <span class="tag">Opcje grafiku</span>
+          <span class="tag">Zablokuj wszystko</span>
+          <span class="tag">Odblokuj wszystko</span>
+          <span class="tag">Zapisz PNG</span>
+          <span class="tag">Eksport JSON</span>
+          <span class="tag">Import JSON</span>
+          <span class="tag">Pomoc</span>
+        </li>
+        <li><strong>Tabela</strong>: lista wyboru w każdej komórce + kłódka; uchwyt ⋮⋮ do przeciągania osób.</li>
+        <li><strong>Ostrzeżenia</strong>: lista wykrytych problemów.</li>
+        <li><strong>Podsumowania</strong>: godziny i liczniki (dzień/noc/urlop/nadgodziny/uwagi).</li>
+      </ul>
+
+      <h2>Dodawanie i edycja osób</h2>
+      <ul>
+        <li><strong>Imię i nazwisko</strong>: wymagane, pojawia się w tabeli i eksporcie.</li>
+        <li><strong>Maks. godziny / miesiąc</strong>: docelowy limit; z opcją <em>Nie przekraczaj limitu godzin</em> staje się twardy (wolne pola zamiast nadgodzin).</li>
+        <li><strong>Długość zmiany</strong>: stałe 12h dla wszystkich (nie można zmienić).</li>
+        <li><strong>Preferencje zmian</strong>: Bez preferencji, Woli dni/noce (miękkie), Tylko dni/noce (twarde).</li>
+        <li><strong>Kolor pracownika</strong>: opcjonalny; włącz w opcjach, by pokolorować wiersz.</li>
+        <li><strong>Nie pracuje w (zmiany)</strong>: zaznacz D/N przy dniach tygodnia; generator unika, a gdy brak alternatywy, może wymusić i zgłosić ostrzeżenie.</li>
+        <li><strong>Edytuj/Usuń</strong>: zmiany odświeżają bieżący grafik.</li>
+        <li><strong>Kolejność</strong>: przeciągnij uchwyt ⋮⋮; kolejność zapisuje się i wpływa na eksport.</li>
+      </ul>
+
+      <h2>Opcje grafiku</h2>
+      <ul>
+        <li><strong>Maks. dni pod rząd (D)</strong> — limit kolejnych zmian dziennych.</li>
+        <li><strong>Maks. nocy pod rząd (N)</strong> — limit kolejnych zmian nocnych.</li>
+        <li><strong>Maks. zmian pod rząd (D lub N)</strong> — łączny limit kolejnych zmian.</li>
+        <li><strong>Używaj kolorów dla pracowników</strong> — koloruje wiersze według wybranego koloru.</li>
+      </ul>
+
+      <h2>Praca z tabelą</h2>
+      <ul>
+        <li>Wybierz <strong>D</strong> lub <strong>N</strong> (przydział), <strong>U</strong> (urlop/wolne) albo zostaw puste (wolne).</li>
+        <li>Zmiany od razu aktualizują ostrzeżenia i podsumowania.</li>
+        <li><strong>Blokady</strong>: każda komórka ma kłódkę; kłódka w nagłówku kolumny blokuje dzień, obok nazwiska blokuje cały miesiąc tej osoby; „Zablokuj/ Odblokuj wszystko” działa na całą siatkę.</li>
+        <li><strong>Przeciąganie</strong>: uchwytem ⋮⋮ zmieniasz kolejność osób; zapisuje się.</li>
+        <li><strong>Weekend</strong>: sobota/niedziela są cieniowane, ale działają jak zwykłe dni.</li>
+      </ul>
+
+      <h2>Jak działa generator</h2>
+      <ul>
+        <li>Dąży do obsadzenia każdego dnia jedną zmianą <strong>D</strong> i jedną <strong>N</strong>.</li>
+        <li>Najpierw respektuje zablokowane komórki (zostawia wpisane D/N/U).</li>
+        <li>Stara się nie przekraczać limitów godzin; przy “Nie przekraczaj limitu godzin” nie wyjdzie ponad limit tej osoby, u innych może lekko przekroczyć, by zapewnić obsadę.</li>
+        <li><em>Tylko dni/noce</em> są bezwzględne; <em>Woli</em> wpływa na punktację, ale pozwala obie zmiany.</li>
+        <li>Unika sekwencji <strong>N→D</strong> dla tej samej osoby.</li>
+        <li>Unika zablokowanych dni/zmian; jeśli brak kandydata, może wymusić i doda ostrzeżenie.</li>
+        <li>Równoważy obciążenie (godziny, dni vs. noce) i korzysta z limitów streaków.</li>
+      </ul>
+
+      <h2>Ostrzeżenia i podświetlenia</h2>
+      <ul>
+        <li><strong>Rodzaje</strong>: braki obsady, sekwencje noc→dzień, złamanie blokady dnia/zmiany, przekroczenie limitu streaków oraz podsumowania (zero godzin, nadgodziny lub ponad limit osoby).</li>
+        <li><strong>Brak obsady</strong> — brakuje D i/lub N (podświetlona kolumna).</li>
+        <li><strong>N→D</strong> — ta sama osoba ma noc, potem dzień (podświetlone komórki).</li>
+        <li><strong>Blokada dnia/zmiany</strong> — wpisano w zablokowany dzień/zmianę (komórka podświetlona; ostrzeżenie opisuje).</li>
+        <li><strong>Streak</strong> — przekroczony limit kolejnych zmian (D, N lub łącznie).</li>
+        <li><strong>Podsumowanie</strong> — zero godzin, >168h/miesiąc lub > limitu osoby.</li>
+        <li><strong>Kiedy się pojawiają</strong> — od razu po generowaniu grafiku i każdej zmianie komórki (D/N/U/puste) lub blokady.</li>
+      </ul>
+
+      <h2>Eksport, import i zapisywanie</h2>
+      <ul>
+        <li><strong>Autozapis</strong>: pracownicy, ustawienia, kolory i blokady są w pamięci przeglądarki na tym urządzeniu. Wyczyść dane strony, by zresetować.</li>
+        <li><strong>Eksport JSON</strong>: przenośna kopia (pracownicy, grafik, miesiąc/rok, blokady, kolory) do migracji lub wersjonowania.</li>
+        <li><strong>Import JSON</strong>: wczytuje zapis; miesiąc/rok dostosują się do pliku, przywróci grafik.</li>
+        <li><strong>Zapisz PNG</strong>: obraz tabeli z podsumowaniem (do druku/maila).</li>
+        <li><strong>Przenoszenie na inny komputer</strong>: na starym <em>Eksport JSON</em>, na nowym <em>Import JSON</em> (miesiąc/rok, pracownicy, kolory, blokady i grafik się przeniosą).</li>
+      </ul>
+
+      <h2>Typowe scenariusze</h2>
+      <ul>
+        <li><strong>Bezpieczne ponowne układanie</strong>: zablokuj zatwierdzone komórki, potem <em>Generuj grafik</em>.</li>
+        <li><strong>Urlopy/wolne</strong>: ustaw <em>U</em>, zablokuj, a potem generuj resztę.</li>
+        <li><strong>Nadgodziny</strong>: zwiększ limit godzin (lub odznacz twardy limit), albo dodaj pracowników.</li>
+        <li><strong>Braki obsady</strong>: dodaj osoby, poluzuj blokady albo limity streaków, potem regeneruj.</li>
+        <li><strong>Kolorowe wiersze</strong>: ustaw kolor przy osobie i włącz kolory w opcjach.</li>
+        <li><strong>Nowy start</strong>: usuń osoby i odśwież albo wyczyść dane strony.</li>
+      </ul>
+
+      <h2>FAQ</h2>
+      <ul>
+        <li><strong>Co znaczą litery?</strong> D = dzień, N = noc, U = urlop/wolne, puste = wolne.</li>
+        <li><strong>Czemu kolumna jest żółta?</strong> Brakuje obsady D i/lub N tego dnia.</li>
+        <li><strong>Czemu zablokowany dzień został wpisany?</strong> Nie było alternatywy; program wymusił i zgłosił ostrzeżenie.</li>
+        <li><strong>Jak zamrozić osobę/zmianę?</strong> Zablokuj wiersz (kłódka obok nazwiska) albo pojedyncze komórki przed ponownym generowaniem.</li>
+        <li><strong>Czy zmienię długość zmiany?</strong> Nie, wszystkie zmiany mają 12h.</li>
+        <li><strong>Gdzie są dane?</strong> W pamięci przeglądarki; użyj eksportu/importu JSON, by przenieść lub zrobić kopię. Strona nie wysyła/pobiera żadnych danych.</li>
+        <li><strong>Jak przenieść dane na inny komputer?</strong> Eksport JSON na starym, Import JSON na nowym — przeniosą się miesiąc/rok, pracownicy, kolory, blokady i grafik.</li>
+      </ul>
+    </div>
+  </body>
+</html>

@@ -253,6 +253,12 @@ function wireControls() {
     });
   }
 
+  if (elements.helpButton) {
+    elements.helpButton.addEventListener("click", () => {
+      window.open("help.html", "_blank", "noopener,noreferrer");
+    });
+  }
+
   if (elements.blockAllButton) {
     elements.blockAllButton.addEventListener("click", () => {
       setAllLocks(appState, true);

@@ -12,6 +12,7 @@ export const elements = {
   exportButton: document.querySelector("#export-btn"),
   exportJsonButton: document.querySelector("#export-json-btn"),
   importJsonInput: document.querySelector("#import-json-input"),
+  helpButton: document.querySelector("#help-btn"),
   scheduleOutput: document.querySelector("#schedule-output"),
   schedulePeriod: document.querySelector("#schedule-period"),
   warningsList: document.querySelector("#warnings-list"),
