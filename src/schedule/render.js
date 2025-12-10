@@ -7,12 +7,23 @@
  *  onToggleLock: (rowId: string, dayIndex: number) => void;
  *  onToggleColumnLock: (dayIndex: number) => void;
  *  onToggleRowLock: (rowId: string) => void;
+ *  onReorderRow?: (
+ *    sourceRowId: string,
+ *    targetRowId: string,
+ *    placement: "before" | "after",
+ *  ) => void;
  * }} handlers
  * @param {{ scheduleOutput: HTMLElement; summaryCardsContainer: HTMLElement }} targets
  */
 export function renderSchedule(schedule, highlights, handlers, targets) {
   const { scheduleOutput, summaryCardsContainer } = targets;
-  const { onSlotChange, onToggleLock, onToggleColumnLock, onToggleRowLock } = handlers;
+  const {
+    onSlotChange,
+    onToggleLock,
+    onToggleColumnLock,
+    onToggleRowLock,
+    onReorderRow,
+  } = handlers;
   scheduleOutput.innerHTML = "";
   if (!schedule) {
     scheduleOutput.classList.add("empty-state");
@@ -21,6 +32,7 @@ export function renderSchedule(schedule, highlights, handlers, targets) {
     return;
   }
   scheduleOutput.classList.remove("empty-state");
+  let draggingRowId = null;
 
   const highlightedColumns = new Set(highlights.columns || []);
   const highlightedCells = new Set(
@@ -73,14 +85,49 @@ export function renderSchedule(schedule, highlights, handlers, targets) {
   table.append(thead);
 
   const tbody = document.createElement("tbody");
+  const clearDragStyles = () => {
+    tbody.querySelectorAll(".drop-target-before, .drop-target-after").forEach((el) => {
+      el.classList.remove("drop-target-before", "drop-target-after");
+    });
+    tbody.querySelectorAll(".dragging").forEach((el) => {
+      el.classList.remove("dragging");
+    });
+  };
   schedule.rows.forEach((row) => {
     const tr = document.createElement("tr");
+    tr.dataset.rowId = row.id;
     const th = document.createElement("th");
     const rowHeader = document.createElement("div");
     rowHeader.className = "row-header";
+    const rowHeaderTitle = document.createElement("div");
+    rowHeaderTitle.className = "row-header__title";
+
+    const dragHandle = document.createElement("button");
+    dragHandle.type = "button";
+    dragHandle.className = "drag-handle";
+    dragHandle.title = "Przeciągnij, aby zmienić kolejność";
+    dragHandle.setAttribute("aria-label", "Przeciągnij, aby zmienić kolejność");
+    dragHandle.textContent = "⋮⋮";
+    dragHandle.draggable = true;
+    dragHandle.addEventListener("dragstart", (event) => {
+      draggingRowId = row.id;
+      clearDragStyles();
+      tr.classList.add("dragging");
+      if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", row.id);
+      }
+    });
+    dragHandle.addEventListener("dragend", () => {
+      draggingRowId = null;
+      clearDragStyles();
+    });
+
     const nameSpan = document.createElement("span");
     nameSpan.textContent = row.name;
-    rowHeader.append(nameSpan);
+    rowHeaderTitle.append(dragHandle);
+    rowHeaderTitle.append(nameSpan);
+    rowHeader.append(rowHeaderTitle);
     const rowLocked = Array.isArray(row.locks) && row.locks.length ? row.locks.every(Boolean) : false;
     const rowLockButton = document.createElement("button");
     rowLockButton.type = "button";
@@ -93,6 +140,41 @@ export function renderSchedule(schedule, highlights, handlers, targets) {
     rowHeader.append(rowLockButton);
     th.append(rowHeader);
     tr.append(th);
+    const getPlacement = (event) => {
+      const rect = tr.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      return event.clientY > midpoint ? "after" : "before";
+    };
+    tr.addEventListener("dragover", (event) => {
+      if (!draggingRowId || draggingRowId === row.id) {
+        return;
+      }
+      event.preventDefault();
+      const placement = getPlacement(event);
+      tr.classList.remove("drop-target-before", "drop-target-after");
+      tr.classList.add(placement === "after" ? "drop-target-after" : "drop-target-before");
+      if (event.dataTransfer) {
+        event.dataTransfer.dropEffect = "move";
+      }
+    });
+    tr.addEventListener("dragleave", () => {
+      tr.classList.remove("drop-target-before", "drop-target-after");
+    });
+    tr.addEventListener("drop", (event) => {
+      if (!draggingRowId || draggingRowId === row.id) {
+        clearDragStyles();
+        return;
+      }
+      event.preventDefault();
+      const placement = getPlacement(event);
+      const sourceId =
+        draggingRowId || (event.dataTransfer ? event.dataTransfer.getData("text/plain") : "");
+      clearDragStyles();
+      if (sourceId && typeof onReorderRow === "function") {
+        onReorderRow(sourceId, row.id, placement);
+      }
+      draggingRowId = null;
+    });
     row.slots.forEach((slot, index) => {
       const td = document.createElement("td");
       const isLocked = Array.isArray(row.locks) ? Boolean(row.locks[index]) : false;

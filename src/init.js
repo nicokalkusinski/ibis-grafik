@@ -9,6 +9,7 @@ import { buildSchedule } from "./schedule/engine.js";
 import { deriveScheduleInsights } from "./schedule/insights.js";
 import { renderSchedule, renderSummary, renderWarnings, updateSchedulePeriodText } from "./schedule/render.js";
 import { setAllLocks, toggleCellLock, toggleColumnLock, toggleRowLock, updateSlotValue } from "./schedule/locks.js";
+import { reorderScheduleRows } from "./schedule/reorder.js";
 import { exportScheduleToJson, exportScheduleToPng } from "./io/exporters.js";
 import { importScheduleFromJson } from "./io/importers.js";
 import { readSettingsPayload, syncSettingsFormValues } from "./settings/form.js";
@@ -330,6 +331,19 @@ function renderAppSchedule() {
         toggleRowLock(appState, rowId);
         renderAppSchedule();
       },
+      onReorderRow: (sourceRowId, targetRowId, placement) => {
+        const changed = reorderScheduleRows(appState, sourceRowId, targetRowId, placement);
+        if (changed) {
+          renderWorkers(appState, {
+            workerListElement: elements.workerListElement,
+            workerRowTemplate: elements.workerRowTemplate,
+          }, {
+            onEdit: handleStartEdit,
+            onDelete: deleteWorker,
+          });
+          renderAppSchedule();
+        }
+      },
     },
     {
       scheduleOutput: elements.scheduleOutput,
@@ -447,5 +461,8 @@ function noopHandlers() {
   return {
     onSlotChange: () => {},
     onToggleLock: () => {},
+    onToggleColumnLock: () => {},
+    onToggleRowLock: () => {},
+    onReorderRow: () => {},
   };
 }
